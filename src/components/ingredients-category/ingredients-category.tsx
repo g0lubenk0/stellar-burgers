@@ -2,29 +2,33 @@ import { forwardRef, useMemo } from 'react';
 import { TIngredientsCategoryProps } from './type';
 import { TIngredient } from '@utils-types';
 import { IngredientsCategoryUI } from '../ui/ingredients-category';
+import { useSelector } from '../../services/store';
+import { selectConstructor } from '../../services/selectors';
+
+const EMPTY_CONSTRUCTOR = { bun: null, ingredients: [] };
 
 export const IngredientsCategory = forwardRef<
   HTMLUListElement,
   TIngredientsCategoryProps
 >(({ title, titleRef, ingredients }, ref) => {
-  /** TODO: взять переменную из стора */
-  const burgerConstructor = {
-    bun: {
-      _id: ''
-    },
-    ingredients: []
-  };
+  const burgerConstructor = useSelector(selectConstructor) || EMPTY_CONSTRUCTOR;
 
   const ingredientsCounters = useMemo(() => {
-    const { bun, ingredients } = burgerConstructor;
-    const counters: { [key: string]: number } = {};
-    ingredients.forEach((ingredient: TIngredient) => {
-      if (!counters[ingredient._id]) counters[ingredient._id] = 0;
-      counters[ingredient._id]++;
+    const counters = new Map<string, number>();
+
+    // Подсчет ингредиентов
+    burgerConstructor.ingredients.forEach((ingredient: TIngredient) => {
+      counters.set(ingredient._id, (counters.get(ingredient._id) || 0) + 1);
     });
-    if (bun) counters[bun._id] = 2;
-    return counters;
-  }, [burgerConstructor]);
+
+    // Добавление булки
+    const bunAmount = 2;
+    if (burgerConstructor.bun) {
+      counters.set(burgerConstructor.bun._id, bunAmount);
+    }
+
+    return Object.fromEntries(counters);
+  }, [burgerConstructor.ingredients, burgerConstructor.bun]);
 
   return (
     <IngredientsCategoryUI
