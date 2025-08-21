@@ -1,12 +1,15 @@
 import { ProfileUI } from '@ui-pages';
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from '../../services/store';
+import { selectUser, selectUserError } from '../../services/selectors';
+import { logoutUser, updateUser } from '../../services/slices/user';
+import { useNavigate } from 'react-router-dom';
 
 export const Profile: FC = () => {
-  /** TODO: взять переменную из стора */
-  const user = {
-    name: '',
-    email: ''
-  };
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector(selectUser) || { name: '', email: '' };
+  const updateError = useSelector(selectUserError) || undefined;
 
   const [formValue, setFormValue] = useState({
     name: user.name,
@@ -29,6 +32,19 @@ export const Profile: FC = () => {
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
+    const payload: { name: string; email: string; password?: string } = {
+      name: formValue.name,
+      email: formValue.email
+    };
+    if (formValue.password) {
+      payload.password = formValue.password;
+    }
+    dispatch(updateUser(payload))
+      .unwrap()
+      .then(() => {
+        setFormValue((prevState) => ({ ...prevState, password: '' }));
+      })
+      .catch(() => {});
   };
 
   const handleCancel = (e: SyntheticEvent) => {
@@ -51,11 +67,10 @@ export const Profile: FC = () => {
     <ProfileUI
       formValue={formValue}
       isFormChanged={isFormChanged}
+      updateUserError={updateError}
       handleCancel={handleCancel}
       handleSubmit={handleSubmit}
       handleInputChange={handleInputChange}
     />
   );
-
-  return null;
 };

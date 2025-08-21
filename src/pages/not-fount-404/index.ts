@@ -1,1 +1,1 @@
-export { NotFound404 } from './not-fount-404';
+export { NotFount404 } from './not-fount-404';
